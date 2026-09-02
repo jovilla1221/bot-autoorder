@@ -1,0 +1,1 @@
+"""Paket routes dashboard web."""

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id" x-data="{ theme: localStorage.getItem('theme') || 'light', sidebarOpen: false }"
+      x-init="$watch('theme', v => { document.documentElement.classList.toggle('dark', v === 'dark'); localStorage.setItem('theme', v); })"
+      :class="theme === 'dark' ? 'dark' : ''">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token or '' }}">
+  <title>{% block title %}Dashboard{% endblock %} — SayaBayar Bot</title>
+
+  <!-- Google Fonts: Space Grotesk + Plus Jakarta Sans + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            heading: ['"Space Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            neo: {
+              yellow: '#FFE600',
+              lime: '#4ADE80',
+              cyan: '#38BDF8',
+              pink: '#FF6B8B',
+              coral: '#F43F5E',
+              purple: '#C084FC',
+              orange: '#FB923C',
+              bg: '#FFFDF5',
+              darkBg: '#0D0D11',
+              darkCard: '#18181F',
+              darkCardAlt: '#22222B',
+              border: '#000000',
+              darkBorder: '#FDE047',
+            }
+          },
+          boxShadow: {
+            'neo-sm': '2px 2px 0px #000000',
+            'neo': '4px 4px 0px #000000',
+            'neo-lg': '6px 6px 0px #000000',
+            'neo-xl': '8px 8px 0px #000000',
+            'neo-dark-sm': '2px 2px 0px #FFE600',
+            'neo-dark': '4px 4px 0px #FFE600',
+            'neo-dark-lg': '6px 6px 0px #FFE600',
+            'neo-dark-white': '4px 4px 0px #FFFFFF',
+          }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+
+    /* Background dot-grid texture */
+    .bg-dot-pattern {
+      background-image: radial-gradient(#000000 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+    }
+    .dark .bg-dot-pattern {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+    }
+
+    /* Tactile button classes */
+    .neo-btn {
+      transition: all 0.12s ease-in-out;
+    }
+    .neo-btn:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #000000;
+    }
+    .dark .neo-btn:hover:not(:disabled) {
+      box-shadow: 6px 6px 0px #FFE600;
+    }
+    .neo-btn:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #000000;
+    }
+    .dark .neo-btn:active:not(:disabled) {
+      box-shadow: 1px 1px 0px #FFE600;
+    }
+
+    /* Interactive Neo Card hover */
+    .neo-card-hover {
+      transition: all 0.15s ease-in-out;
+    }
+    .neo-card-hover:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #000000;
+    }
+    .dark .neo-card-hover:hover {
+      box-shadow: 6px 6px 0px #FFE600;
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-neo-bg dark:bg-neo-darkBg text-slate-900 dark:text-zinc-100 min-h-screen bg-dot-pattern font-sans transition-colors selection:bg-neo-yellow selection:text-black">
+
+<div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="fixed lg:sticky top-0 z-40 h-screen w-64 shrink-0 bg-white dark:bg-neo-darkCard border-r-[3px] border-black dark:border-zinc-700 flex flex-col transition-transform -translate-x-full lg:translate-x-0"
+         :class="sidebarOpen && '!translate-x-0'">
+    
+    <!-- Logo header -->
+    <div class="p-5 border-b-[3px] border-black dark:border-zinc-700 bg-neo-yellow/20 dark:bg-neo-darkCardAlt">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-neo-yellow border-2 border-black rounded-lg shadow-neo-sm">
+        <span class="text-xl">⚡</span>
+        <span class="font-heading font-black tracking-tight text-black text-sm uppercase">SayaBayar Bot</span>
+      </div>
+      <div class="mt-2.5 flex items-center justify-between">
+        <span class="font-mono text-[10px] font-bold tracking-wider uppercase text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded border border-black/40 dark:border-zinc-600">
+          Admin Console v2.0
+        </span>
+        <span class="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-500">
+          ● LIVE
+        </span>
+      </div>
+    </div>
+
+    <!-- Nav list -->
+    <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+      {% set nav = [
+        ('/', '📊', 'Dashboard'),
+        ('/stocks', '📦', 'Stok Akun'),
+        ('/products', '🛍️', 'Produk'),
+        ('/orders', '💳', 'Pesanan'),
+        ('/users', '👥', 'Users'),
+      ] %}
+      {% for url, icon, label in nav %}
+      <a href="{{ url }}"
+         class="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-bold border-2 transition-all
+                {% if request.url.path == url %}
+                  bg-neo-yellow text-black border-black shadow-neo translate-x-1
+                {% else %}
+                  bg-white dark:bg-neo-darkCardAlt text-zinc-800 dark:text-zinc-200 border-black dark:border-zinc-700 shadow-neo-sm hover:bg-amber-100/70 dark:hover:bg-zinc-800 hover:translate-x-0.5 hover:shadow-neo
+                {% endif %}">
+        <span class="text-base">{{ icon }}</span>
+        <span class="font-heading">{{ label }}</span>
+      </a>
+      {% endfor %}
+
+      <div class="pt-3 border-t-2 border-dashed border-zinc-300 dark:border-zinc-700 mt-3">
+        <a href="/stocks" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-neo-cyan/20 dark:bg-sky-950/40 text-sky-900 dark:text-sky-300 border-2 border-black dark:border-sky-800 shadow-neo-sm hover:shadow-neo hover:bg-neo-cyan/40 transition-all">
+          <span>📤</span> Export Stok (.txt/.csv)
+        </a>
+      </div>
+    </nav>
+
+    <!-- Logout -->
+    <div class="p-4 border-t-[3px] border-black dark:border-zinc-700 bg-zinc-50 dark:bg-neo-darkCardAlt">
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token or '' }}">
+        <button class="w-full neo-btn flex items-center justify-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-neo-pink text-black font-black border-2 border-black shadow-neo-sm">
+          <span>🚪</span> Logout Admin
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Mobile overlay -->
+  <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
+       class="fixed inset-0 bg-black/60 backdrop-blur-xs z-30 lg:hidden"></div>
+
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Topbar -->
+    <header class="sticky top-0 z-20 bg-white/95 dark:bg-neo-darkCard/95 backdrop-blur border-b-[3px] border-black dark:border-zinc-700 px-4 lg:px-8 py-3.5 flex items-center gap-3 shadow-sm">
+      <button @click="sidebarOpen = !sidebarOpen"
+              class="lg:hidden neo-btn p-2 rounded-xl bg-neo-yellow text-black border-2 border-black shadow-neo-sm font-bold text-base">
+        ☰
+      </button>
+
+      <div class="flex items-center gap-2">
+        <h2 class="font-heading font-black text-lg lg:text-xl tracking-tight uppercase">
+          {% block page_title %}{% endblock %}
+        </h2>
+      </div>
+
+      <div class="ml-auto flex items-center gap-3">
+        <!-- Shortcut ke Bot Telegram -->
+        <a href="https://t.me/autoorderrvspcbot" target="_blank"
+           class="neo-btn hidden md:inline-flex items-center gap-1.5 font-heading font-black text-xs uppercase px-3 py-2 rounded-xl bg-neo-yellow text-black border-2 border-black shadow-neo-sm">
+          <span>🤖</span> Buka Bot
+        </a>
+
+        <!-- Quick Tunnel / Status pill -->
+        <span class="hidden sm:inline-flex items-center gap-1.5 font-mono text-xs font-black px-3 py-1.5 rounded-lg bg-neo-lime text-black border-2 border-black shadow-neo-sm">
+          <span class="animate-pulse">●</span> QuickTunnel Active
+        </span>
+
+        <!-- Theme Toggle -->
+        <button @click="theme = theme === 'dark' ? 'light' : 'dark'"
+                class="neo-btn p-2 rounded-xl bg-white dark:bg-zinc-800 text-black dark:text-white border-2 border-black dark:border-zinc-600 shadow-neo-sm"
+                title="Ganti Mode Gelap/Terang">
+          <span x-show="theme === 'dark'" class="text-base">☀️</span>
+          <span x-show="theme === 'light'" x-cloak class="text-base">🌙</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

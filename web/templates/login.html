@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id" x-data="{ theme: localStorage.getItem('theme') || 'light' }"
+      x-init="document.documentElement.classList.toggle('dark', theme === 'dark')" :class="theme === 'dark' ? 'dark' : ''">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Admin — SayaBayar Bot</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            heading: ['"Space Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            neo: {
+              yellow: '#FFE600',
+              lime: '#4ADE80',
+              cyan: '#38BDF8',
+              pink: '#FF6B8B',
+              coral: '#F43F5E',
+              purple: '#C084FC',
+              bg: '#FFFDF5',
+              darkBg: '#0D0D11',
+              darkCard: '#18181F',
+            }
+          },
+          boxShadow: {
+            'neo-sm': '2px 2px 0px #000000',
+            'neo': '4px 4px 0px #000000',
+            'neo-lg': '6px 6px 0px #000000',
+            'neo-xl': '8px 8px 0px #000000',
+            'neo-dark': '4px 4px 0px #FFE600',
+            'neo-dark-xl': '8px 8px 0px #FFE600',
+          }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    .bg-dot-pattern {
+      background-image: radial-gradient(#000000 1.3px, transparent 1.3px);
+      background-size: 24px 24px;
+    }
+    .dark .bg-dot-pattern {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.3px, transparent 1.3px);
+      background-size: 24px 24px;
+    }
+    .neo-btn {
+      transition: all 0.12s ease-in-out;
+    }
+    .neo-btn:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #000000;
+    }
+    .dark .neo-btn:hover:not(:disabled) {
+      box-shadow: 6px 6px 0px #FFE600;
+    }
+    .neo-btn:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #000000;
+    }
+    .dark .neo-btn:active:not(:disabled) {
+      box-shadow: 1px 1px 0px #FFE600;
+    }
+  </style>
+</head>
+<body class="bg-neo-bg dark:bg-neo-darkBg text-slate-900 dark:text-zinc-100 min-h-screen bg-dot-pattern font-sans flex flex-col items-center justify-center p-4 transition-colors">
+
+  <!-- Floating decorative sticker tags -->
+  <div class="fixed top-6 left-6 hidden md:block">
+    <div class="px-3.5 py-1.5 bg-neo-yellow text-black font-mono font-black text-xs border-2 border-black rounded-lg shadow-neo rotate-[-3deg]">
+      ★ SAYABAYAR GATEWAY
+    </div>
+  </div>
+  <div class="fixed top-6 right-6 hidden md:block">
+    <div class="px-3.5 py-1.5 bg-neo-lime text-black font-mono font-black text-xs border-2 border-black rounded-lg shadow-neo rotate-[3deg]">
+      ⚡ AUTO-FULFILLMENT ENGINE
+    </div>
+  </div>
+
+  <div class="w-full max-w-md">
+    <!-- Card container with Neobrutalist border & heavy shadow -->
+    <div class="bg-white dark:bg-neo-darkCard border-[3.5px] border-black dark:border-zinc-500 rounded-3xl p-8 shadow-neo-xl dark:shadow-neo-dark-xl relative transition-all">
+      
+      <!-- Top stamp -->
+      <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-dashed border-zinc-300 dark:border-zinc-700">
+        <span class="font-mono text-xs font-bold px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded border border-black/40 dark:border-zinc-600">
+          SYS://AUTH_GATE
+        </span>
+        <button @click="theme = theme === 'dark' ? 'light' : 'dark'"
+                class="neo-btn p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border-2 border-black shadow-neo-sm text-sm"
+                title="Toggle Theme">
+          <span x-show="theme === 'dark'">☀️</span>
+          <span x-show="theme === 'light'">🌙</span>
+        </button>
+      </div>
+
+      <!-- Icon & Title -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-neo-yellow border-[3px] border-black rounded-2xl shadow-neo text-3xl mb-4 transform rotate-[-2deg] hover:rotate-0 transition-transform">
+          ⚡
+        </div>
+        <h1 class="font-heading font-black text-2xl lg:text-3xl uppercase tracking-tight text-black dark:text-white">
+          SayaBayar Bot
+        </h1>
+        <p class="font-mono text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wider">
+          Admin Dashboard Console
+        </p>
+      </div>
+
+      {% if error %}
+      <div class="mb-5 px-4 py-3 rounded-xl bg-neo-pink text-black font-bold text-sm border-2 border-black shadow-neo flex items-center gap-2">
+        <span class="text-base">⚠️</span>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      <form method="post" action="/login" class="space-y-5">
+        <div>
+          <label class="block font-heading font-black text-xs uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2">
+            Password Akses Admin
+          </label>
+          <div class="relative" x-data="{ show: false }">
+            <input :type="show ? 'text' : 'password'" name="password" required autofocus
+                   class="w-full pl-4 pr-12 py-3.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-mono text-base text-black dark:text-white placeholder-zinc-400 shadow-neo-sm focus:shadow-neo focus:-translate-y-0.5 outline-none transition-all"
+                   placeholder="••••••••">
+            <button type="button" @click="show = !show"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-zinc-500 hover:text-black dark:hover:text-white font-bold text-sm">
+              <span x-show="!show">👁️</span>
+              <span x-show="show" x-cloak>🙈</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit"
+                class="w-full neo-btn py-3.5 rounded-xl bg-neo-yellow hover:bg-amber-300 text-black font-heading font-black text-base uppercase tracking-wider border-[2.5px] border-black shadow-neo">
+          Masuk Dashboard →
+        </button>
+      </form>
+
+      <div class="mt-6 pt-4 border-t-2 border-dashed border-zinc-200 dark:border-zinc-700/60 text-center">
+        <span class="inline-block px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono text-[11px] font-bold rounded-lg border border-black/30 dark:border-zinc-700">
+          🛡️ Brute-force guard: Max 5 percobaan / 5 menit
+        </span>
+      </div>
+    </div>
+
+    <p class="text-center font-mono text-xs text-zinc-500 dark:text-zinc-500 mt-5">
+      SayaBayar Bot Auto-Order · Built for High Reliability
+    </p>
+  </div>
+</body>
+</html>

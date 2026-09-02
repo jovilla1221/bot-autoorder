@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}Katalog & Produk{% endblock %}
+{% block page_title %}🛍️ Manajemen Katalog & Produk{% endblock %}
+
+{% block content %}
+<!-- Manajemen Kategori -->
+<div class="bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-6 mb-8 shadow-neo"
+     x-data="{ name: '', editing: null, editName: '', add: async function() {
+        if (!this.name.trim()) return;
+        await postJson('/api/categories/add', { name: this.name }); this.name=''; location.reload();
+     }, rename: async function(id) {
+        if (!this.editName.trim()) return;
+        await postJson('/api/categories/rename', { category_id: id, name: this.editName }); this.editing=null; location.reload();
+     }, remove: async function(id) {
+        if (!confirm('Hapus kategori ini?')) return;
+        const r = await postJson('/api/categories/delete', { category_id: id });
+        if (!r.ok) alert(r.message); location.reload();
+     }}">
+  <div class="flex items-center gap-2 mb-3 pb-3 border-b-2 border-black dark:border-zinc-700">
+    <span class="text-xl">📂</span>
+    <h3 class="font-heading font-black text-base uppercase">Kelola Kategori Produk</h3>
+  </div>
+
+  <div class="flex flex-wrap gap-2.5 mb-5">
+    {% for c in categories %}
+    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-zinc-800 border-2 border-black dark:border-zinc-500 shadow-neo-sm">
+      {% if editing and editing == c.id %}
+        <input x-model="editName" class="bg-white dark:bg-zinc-900 border border-black px-2 py-0.5 rounded outline-none font-mono text-xs w-28" @keydown.enter="rename('{{ c.id }}')">
+        <button @click="rename('{{ c.id }}')" class="text-emerald-600 font-black text-sm" title="Simpan">✓</button>
+        <button @click="editing=null" class="text-zinc-500 font-bold" title="Batal">✕</button>
+      {% else %}
+        <span class="font-heading uppercase tracking-wide">{{ c.name }}</span>
+        <button @click="editing='{{ c.id }}'; editName='{{ c.name }}'" class="text-zinc-500 hover:text-black dark:hover:text-white" title="Rename Kategori">✏️</button>
+        <button @click="remove('{{ c.id }}')" class="text-rose-500 hover:text-rose-700" title="Hapus Kategori">✕</button>
+      {% endif %}
+    </div>
+    {% else %}
+    <span class="font-mono text-xs text-zinc-400">Belum ada kategori terdaftar.</span>
+    {% endfor %}
+  </div>
+
+  <div class="flex flex-wrap sm:flex-nowrap gap-2.5 max-w-md">
+    <input x-model="name" placeholder="Nama kategori baru…" @keydown.enter="add()"
+           class="flex-1 px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 text-sm font-bold shadow-neo-sm focus:shadow-neo outline-none transition">
+    <button @click="add()"
+            class="neo-btn px-5 py-2.5 rounded-xl bg-neo-lime text-black font-heading font-black text-xs uppercase tracking-wider border-[2.5px] border-black shadow-neo-sm">
+      + Tambah
+    </button>
+  </div>
+</div>
+
+<!-- Daftar Produk -->
+<div class="bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-6 shadow-neo"
+     x-data="productsPage()">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b-2 border-black dark:border-zinc-700">
+    <div class="flex items-center gap-2">
+      <span class="text-xl">🛍️</span>
+      <h3 class="font-heading font-black text-base lg:text-lg uppercase">
+        Daftar Produk
+        <span class="font-mono text-xs font-normal text-zinc-500 dark:text-zinc-400">({{ products|length }} item)</span>
+      </h3>
+    </div>
+    <button @click="openAdd()"
+            class="neo-btn px-4 py-2.5 rounded-xl bg-neo-yellow text-black font-heading font-black text-xs uppercase tracking-wider border-[2.5px] border-black shadow-neo-sm">
+      + Tambah Produk Baru
+    </button>
+  </div>
+
+  <div class="overflow-x-auto border-2 border-black dark:border-zinc-700 rounded-xl shadow-neo-sm">
+    <table class="w-full text-sm">
+      <thead class="bg-neo-yellow text-black border-b-2 border-black font-heading font-black text-xs uppercase tracking-wider">
+        <tr>
+          <th class="py-3 px-3.5 text-left">Produk</th>
+          <th class="py-3 px-3.5 text-left">Kategori</th>
+          <th class="py-3 px-3.5 text-left">Harga Jual</th>
+          <th class="py-3 px-3.5 text-left">Stok Ready</th>
+          <th class="py-3 px-3.5 text-left">Status Bot</th>
+          <th class="py-3 px-3.5 text-right">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y-2 divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-800">
+        {% for p in products %}
+        {% set st = summary[p.id] %}
+        <tr class="hover:bg-amber-50/40 dark:hover:bg-zinc-700/40 transition">
+          <td class="py-3 px-3.5">
+            <div class="font-heading font-black text-sm text-zinc-900 dark:text-zinc-100">{{ p.name }}</div>
+            <div class="font-mono text-xs text-zinc-500 dark:text-zinc-400">slug: {{ p.id }}</div>
+          </td>
+          <td class="py-3 px-3.5">
+            <span class="font-mono text-xs font-bold uppercase px-2 py-0.5 bg-zinc-100 dark:bg-zinc-700 rounded border border-black/30 dark:border-zinc-600">
+              {{ p.category_id }}
+            </span>
+          </td>
+          <td class="py-3 px-3.5 font-mono font-black text-sm">
+            Rp {{ p.price|rupiah|replace('Rp ','') }}
+          </td>
+          <td class="py-3 px-3.5 font-mono">
+            {% set sc = 'bg-rose-500 text-white' if not st or st.ready == 0 else ('bg-neo-yellow text-black' if st.ready < 5 else 'bg-neo-lime text-black') %}
+            <span class="inline-block px-2.5 py-0.5 rounded-lg border border-black text-xs font-black {{ sc }}">
+              {{ st.ready if st else 0 }} akun
+            </span>
+          </td>
+          <td class="py-3 px-3.5">
+            <!-- Mechanical Toggle Button -->
+            <button @click="toggle('{{ p.id }}')"
+                    class="neo-btn relative inline-flex h-7 w-13 items-center rounded-full border-2 border-black transition-colors"
+                    :class="'{{ p.is_active }}' === 'True' ? 'bg-neo-lime' : 'bg-zinc-300 dark:bg-zinc-700'"
+                    title="Toggle Aktif/Nonaktif di Katalog Bot">
+              <span class="inline-block h-5 w-5 rounded-full border-2 border-black bg-white shadow-none transition-transform"
+                    style="transform: {{ 'translateX(24px)' if p.is_active else 'translateX(2px)' }};"></span>
+            </button>
+          </td>
+          <td class="py-3 px-3.5 text-right space-x-1.5 whitespace-nowrap">
+            <button @click="openEdit({{ p|tojson }})"
+                    class="neo-btn font-mono text-xs px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-black dark:text-white font-bold border-2 border-black shadow-neo-sm">
+              ✏️ Edit
+            </button>
+            <button @click="remove('{{ p.id }}')"
+                    class="neo-btn font-mono text-xs px-3 py-1.5 rounded-lg bg-neo-pink text-black font-bold border-2 border-black shadow-neo-sm">
+              🗑 Hapus
+            </button>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="py-8 text-center text-zinc-400 font-mono">Belum ada produk terdaftar.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Edit/Tambah Produk -->
+  <div x-show="modal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-xs" @click="modal=false"></div>
+    <div class="relative bg-white dark:bg-neo-darkCard rounded-3xl border-[3.5px] border-black dark:border-zinc-500 shadow-neo-xl max-w-lg w-full p-6 transition-all">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b-2 border-black dark:border-zinc-700">
+        <h3 class="font-heading font-black text-lg uppercase" x-text="editingId ? 'Edit Produk' : 'Tambah Produk Baru'"></h3>
+        <button @click="modal=false" class="font-mono font-bold text-lg hover:opacity-70">✕</button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <div x-show="!editingId">
+          <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">ID Slug (Unik, huruf kecil & underscore)</label>
+          <input x-model="form.product_id" placeholder="netflix_premium_1bln"
+                 class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-mono text-xs shadow-neo-sm focus:shadow-neo outline-none">
+        </div>
+        <div>
+          <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Kategori</label>
+          <select x-model="form.category_id"
+                  class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-bold text-xs shadow-neo-sm focus:shadow-neo outline-none">
+            {% for c in categories %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Nama Produk</label>
+          <input x-model="form.name" placeholder="Netflix Trial REG TH"
+                 class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-bold text-sm shadow-neo-sm focus:shadow-neo outline-none">
+        </div>
+        <div>
+          <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Harga Jual (Rp)</label>
+          <input x-model.number="form.price" type="number" min="0" placeholder="25000"
+                 class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-mono font-bold text-sm shadow-neo-sm focus:shadow-neo outline-none">
+        </div>
+        <div>
+          <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Deskripsi Produk (Ditampilkan di Telegram)</label>
+          <textarea x-model="form.description" rows="3" placeholder="Deskripsi produk, durasi, dan ketentuan garansi"
+                    class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 text-xs shadow-neo-sm focus:shadow-neo outline-none"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t-2 border-dashed border-zinc-200 dark:border-zinc-700 flex gap-3 justify-end">
+        <button @click="modal=false"
+                class="neo-btn font-heading font-black text-xs uppercase px-5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-2 border-black shadow-neo-sm">
+          Batal
+        </button>
+        <button @click="save()" :disabled="saving"
+                class="neo-btn font-heading font-black text-xs uppercase tracking-wider px-6 py-2.5 rounded-xl bg-neo-yellow text-black border-[2.5px] border-black shadow-neo disabled:opacity-40">
+          <span x-text="saving ? 'Menyimpan…' : 'Simpan Produk'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function productsPage() {
+  return {
+    modal: false, editingId: null, saving: false,
+    form: { product_id: '', category_id: 'streaming', name: '', price: 0, description: '' },
+    openAdd() { this.editingId = null; this.form = { product_id: '', category_id: 'streaming', name: '', price: 0, description: '' }; this.modal = true; },
+    openEdit(p) { this.editingId = p.id; this.form = { ...p }; this.modal = true; },
+    async save() {
+      this.saving = true;
+      if (this.editingId) {
+        await postJson('/api/products/update', { ...this.form, product_id: this.editingId });
+      } else {
+        const r = await postJson('/api/products/add', this.form);
+        if (!r.ok) { alert(r.message); this.saving = false; return; }
+      }
+      location.reload();
+    },
+    async toggle(id) { await postJson('/api/products/toggle', { product_id: id }); location.reload(); },
+    async remove(id) {
+      if (!confirm('Yakin hapus produk ' + id + '?')) return;
+      const r = await postJson('/api/products/delete', { product_id: id });
+      if (!r.ok) { alert(r.message); return; }
+      location.reload();
+    },
+  }
+}
+async function postJson(url, body) {
+  const csrf = document.querySelector('meta[name=csrf-token]').content;
+  const res = await fetch(url, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+    body: JSON.stringify(body) });
+  return res.json();
+}
+</script>
+{% endblock %}

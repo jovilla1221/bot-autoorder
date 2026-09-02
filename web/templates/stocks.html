@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Stok Akun{% endblock %}
+{% block page_title %}📦 Manajemen Stok Akun{% endblock %}
+
+{% block content %}
+<!-- Ringkasan Stok per Produk -->
+<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+  {% for s in summary %}
+  {% set badge_style = 'bg-rose-500 text-white' if s.ready == 0 else ('bg-neo-yellow text-black' if s.ready < 5 else 'bg-neo-lime text-black') %}
+  <div class="neo-card-hover bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-5 shadow-neo flex flex-col justify-between">
+    <div>
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <h4 class="font-heading font-black text-base uppercase text-zinc-900 dark:text-zinc-100 tracking-tight">
+            {{ s.product_name }}
+          </h4>
+          <span class="font-mono text-xs text-zinc-500 dark:text-zinc-400 font-bold">
+            {{ s.sold }} akun sukses terjual
+          </span>
+        </div>
+        <span class="font-mono font-black text-xs uppercase px-2.5 py-1 rounded-lg border-2 border-black shadow-neo-sm {{ badge_style }}">
+          {{ s.ready }} READY
+        </span>
+      </div>
+    </div>
+
+    <div class="mt-4 pt-3 border-t-2 border-dashed border-zinc-200 dark:border-zinc-700 flex flex-wrap gap-2">
+      <a href="/stocks?product={{ s.product_id }}"
+         class="neo-btn font-mono text-xs font-bold px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white border-2 border-black shadow-neo-sm">
+        🔍 Filter
+      </a>
+      <a href="/export/stocks?product={{ s.product_id }}&fmt=txt"
+         class="neo-btn font-mono text-xs font-bold px-3 py-1.5 rounded-lg bg-neo-cyan text-black border-2 border-black shadow-neo-sm">
+        ⬇ .TXT
+      </a>
+      <a href="/export/stocks?product={{ s.product_id }}&fmt=csv"
+         class="neo-btn font-mono text-xs font-bold px-3 py-1.5 rounded-lg bg-neo-lime text-black border-2 border-black shadow-neo-sm">
+        ⬇ .CSV
+      </a>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-span-full p-8 text-center text-zinc-500 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl font-mono">
+    Belum ada produk untuk menampilkan stok.
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Bulk Restock Form -->
+<div class="bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-6 mb-8 shadow-neo"
+     x-data="{ product: '{{ selected_product or '' }}', accounts: '', dedup: true, result: null, loading: false, submit: async function() {
+        this.loading = true; this.result = null;
+        const csrf = document.querySelector('meta[name=csrf-token]').content;
+        const res = await fetch('/api/stocks/bulk', { method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+          body: JSON.stringify({ product_id: this.product, accounts: this.accounts, dedup: this.dedup }) });
+        this.result = await res.json(); this.loading = false;
+        if (this.result.added > 0) setTimeout(() => location.reload(), 1500);
+     }}">
+  <div class="flex items-center gap-2 mb-2">
+    <span class="text-xl">➕</span>
+    <h3 class="font-heading font-black text-lg uppercase">Bulk Restock Akun Baru</h3>
+  </div>
+  <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400 mb-5">
+    Satu akun per baris. Format teks bebas (contoh: <code class="bg-zinc-200 dark:bg-zinc-800 px-1 py-0.5 rounded text-black dark:text-white">email:password</code> atau json/cookie). Duplikat stok ready otomatis diabaikan jika opsi dedup aktif.
+  </p>
+
+  <div class="grid md:grid-cols-2 gap-5">
+    <div class="flex flex-col justify-between">
+      <div>
+        <label class="block font-heading font-black text-xs uppercase tracking-wider mb-2">Pilih Produk</label>
+        <select x-model="product"
+                class="w-full px-4 py-3 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-bold text-sm shadow-neo-sm focus:shadow-neo outline-none transition">
+          <option value="">— Pilih Produk Tujuan —</option>
+          {% for p in products %}
+          <option value="{{ p.id }}">{{ p.name }} ({{ p.id }})</option>
+          {% endfor %}
+        </select>
+
+        <label class="flex items-center gap-2.5 mt-4 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border-2 border-black dark:border-zinc-700 cursor-pointer text-xs font-bold">
+          <input type="checkbox" x-model="dedup" class="w-4 h-4 rounded border-2 border-black text-neo-yellow focus:ring-0">
+          <span>Otomatis lewati akun duplikat yang sudah ada di stok ready</span>
+        </label>
+      </div>
+
+      <button @click="submit()" :disabled="loading || !product || !accounts.trim()"
+              class="neo-btn mt-5 w-full py-3.5 rounded-xl bg-neo-yellow text-black font-heading font-black text-sm uppercase tracking-wider border-[2.5px] border-black shadow-neo disabled:opacity-40 transition">
+        <span x-show="!loading">⚡ Simpan Stok Sekarang</span>
+        <span x-show="loading">Menyimpan Akun…</span>
+      </button>
+    </div>
+
+    <div>
+      <label class="block font-heading font-black text-xs uppercase tracking-wider mb-2">Daftar Kredensial Akun</label>
+      <textarea x-model="accounts" rows="7" placeholder="user1@example.com:password123&#10;user2@example.com:password456"
+                class="w-full px-4 py-3 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-mono text-xs text-black dark:text-white shadow-neo-sm focus:shadow-neo outline-none transition"></textarea>
+    </div>
+  </div>
+
+  <div x-show="result" x-cloak class="mt-5 p-4 rounded-xl border-2 border-black shadow-neo font-mono text-xs font-bold"
+       :class="result && result.ok ? 'bg-neo-lime text-black' : 'bg-neo-pink text-black'"
+       x-text="result ? (result.ok ? `✅ BERHASIL: ${result.added} akun ditambahkan, ${result.skipped_duplicates} duplikat di-skip. Total ready saat ini: ${result.total_ready}.` : `❌ GAGAL: ${result.message}`) : ''">
+  </div>
+</div>
+
+<!-- Audit List Table -->
+<div class="bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-6 shadow-neo"
+     x-data="{ shown: {} }">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b-2 border-black dark:border-zinc-700">
+    <div class="flex items-center gap-2">
+      <span class="text-xl">🔍</span>
+      <h3 class="font-heading font-black text-base lg:text-lg uppercase">
+        Audit Detail Stok
+        <span class="font-mono text-xs font-normal text-zinc-500 dark:text-zinc-400">({{ stocks|length }} baris)</span>
+      </h3>
+    </div>
+    {% if selected_product %}
+    <a href="/stocks" class="neo-btn font-mono text-xs font-bold px-3 py-1.5 rounded-lg bg-neo-pink text-black border-2 border-black shadow-neo-sm">
+      ✕ Hapus Filter ({{ selected_product }})
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="overflow-x-auto border-2 border-black dark:border-zinc-700 rounded-xl shadow-neo-sm">
+    <table class="w-full text-sm">
+      <thead class="bg-neo-yellow text-black border-b-2 border-black font-heading font-black text-xs uppercase tracking-wider">
+        <tr>
+          <th class="py-3 px-3 text-left">ID</th>
+          <th class="py-3 px-3 text-left">Produk</th>
+          <th class="py-3 px-3 text-left">Data Akun</th>
+          <th class="py-3 px-3 text-left">Status</th>
+          <th class="py-3 px-3 text-left">Tanggal Masuk</th>
+          <th class="py-3 px-3 text-left">Terjual</th>
+          <th class="py-3 px-3 text-left">Order Terkait</th>
+          <th class="py-3 px-3 text-right">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y-2 divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-800">
+        {% for s in stocks %}
+        <tr class="hover:bg-amber-50/40 dark:hover:bg-zinc-700/40 transition">
+          <td class="py-2.5 px-3 font-mono font-bold text-zinc-500 dark:text-zinc-400">#{{ s.id }}</td>
+          <td class="py-2.5 px-3 font-bold text-xs">{{ s.product_name or s.product_id }}</td>
+          <td class="py-2.5 px-3 font-mono text-xs">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-700 rounded border border-black/30 dark:border-zinc-600">
+              <span x-show="!shown[{{ s.id }}]">{{ mask(s.account_data) }}</span>
+              <span x-show="shown[{{ s.id }}]" x-cloak class="break-all text-emerald-600 dark:text-emerald-400 font-black">{{ s.account_data }}</span>
+              <button @click="shown[{{ s.id }}] = !shown[{{ s.id }}]"
+                      class="neo-btn ml-1 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-800 text-[10px] border border-black shadow-none font-bold"
+                      :title="shown[{{ s.id }}] ? 'Sembunyikan' : 'Tampilkan'">
+                <span x-show="!shown[{{ s.id }}]">👁</span>
+                <span x-show="shown[{{ s.id }}]" x-cloak>🙈</span>
+              </button>
+            </span>
+          </td>
+          <td class="py-2.5 px-3">
+            {% if s.is_sold %}
+            <span class="font-mono font-bold text-[10px] uppercase px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-400">
+              TERJUAL
+            </span>
+            {% else %}
+            <span class="font-mono font-black text-[10px] uppercase px-2 py-0.5 rounded bg-neo-lime text-black border border-black">
+              READY
+            </span>
+            {% endif %}
+          </td>
+          <td class="py-2.5 px-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ s.created_at|tgdate }}</td>
+          <td class="py-2.5 px-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ s.sold_at|tgdate if s.sold_at else '-' }}</td>
+          <td class="py-2.5 px-3 font-mono text-xs">
+            {% if s.order_id %}
+            <a href="/orders?q={{ s.order_id }}" class="font-bold underline text-indigo-600 dark:text-indigo-400 hover:text-black">
+              #{{ s.order_id }}
+            </a>
+            {% else %}
+            -
+            {% endif %}
+          </td>
+          <td class="py-2.5 px-3 text-right">
+            {% if not s.is_sold %}
+            <button @click="delStock({{ s.id }})"
+                    class="neo-btn font-mono text-xs px-2.5 py-1 rounded-lg bg-neo-pink text-black font-bold border-2 border-black shadow-neo-sm"
+                    title="Hapus baris stok ini">
+              🗑 Hapus
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="py-8 text-center text-zinc-400 font-mono">Belum ada akun di tabel stok.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function delStock(id) {
+  if (!confirm('Yakin hapus stok akun #' + id + '?')) return;
+  const csrf = document.querySelector('meta[name=csrf-token]').content;
+  const res = await fetch('/api/stocks/delete', { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+    body: JSON.stringify({ stock_id: id }) });
+  const data = await res.json();
+  if (data.ok) location.reload();
+  else alert(data.message || 'Gagal hapus stok');
+}
+</script>
+{% endblock %}

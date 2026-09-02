@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Users & Broadcast{% endblock %}
+{% block page_title %}👥 Pengguna & Broadcast Massal{% endblock %}
+
+{% block content %}
+<div class="grid xl:grid-cols-3 gap-6">
+  <!-- Tabel Pelanggan -->
+  <div class="xl:col-span-2 bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-6 shadow-neo overflow-x-auto">
+    <div class="flex items-center justify-between mb-4 pb-3 border-b-2 border-black dark:border-zinc-700">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">👥</span>
+        <h3 class="font-heading font-black text-base lg:text-lg uppercase">
+          Daftar Pengguna
+          <span class="font-mono text-xs font-normal text-zinc-500 dark:text-zinc-400">({{ users|length }} user)</span>
+        </h3>
+      </div>
+      <span class="font-mono text-xs font-bold text-zinc-400">Customer Database</span>
+    </div>
+
+    <div class="overflow-x-auto border-2 border-black dark:border-zinc-700 rounded-xl shadow-neo-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-neo-yellow text-black border-b-2 border-black font-heading font-black text-xs uppercase tracking-wider">
+          <tr>
+            <th class="py-3 px-3.5 text-left">Nama / ID User</th>
+            <th class="py-3 px-3.5 text-left">Username</th>
+            <th class="py-3 px-3.5 text-right">Pesanan</th>
+            <th class="py-3 px-3.5 text-right">Total Belanja (LTV)</th>
+            <th class="py-3 px-3.5 text-left">Terdaftar</th>
+            <th class="py-3 px-3.5 text-left">Order Terakhir</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y-2 divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-800">
+          {% for u in users %}
+          <tr class="hover:bg-amber-50/40 dark:hover:bg-zinc-700/40 transition">
+            <td class="py-3 px-3.5">
+              <div class="font-bold text-zinc-900 dark:text-zinc-100">{{ u.first_name or '-' }}</div>
+              <div class="font-mono text-xs text-zinc-400">ID: {{ u.user_id }}</div>
+            </td>
+            <td class="py-3 px-3.5 font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+              {{ '@' + u.username if u.username else '-' }}
+            </td>
+            <td class="py-3 px-3.5 text-right font-mono font-bold">{{ u.total_orders }}</td>
+            <td class="py-3 px-3.5 text-right font-mono font-black">
+              {% if u.total_spent > 0 %}
+              <span class="inline-block px-2 py-0.5 rounded-md bg-neo-lime text-black border border-black text-xs">
+                Rp {{ u.total_spent|rupiah|replace('Rp ','') }}
+              </span>
+              {% else %}
+              <span class="text-zinc-400 text-xs">Rp 0</span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-3.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ u.created_at|tgdate }}</td>
+            <td class="py-3 px-3.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ u.last_order_at|tgdate if u.last_order_at else '-' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="py-10 text-center text-zinc-400 font-mono">Belum ada pengguna terdaftar di bot.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Broadcast Station Engine -->
+  <div class="bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-6 shadow-neo"
+       x-data="broadcastPage()">
+    <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-black dark:border-zinc-700">
+      <span class="text-xl">📣</span>
+      <h3 class="font-heading font-black text-base lg:text-lg uppercase">Broadcast Telegram</h3>
+    </div>
+
+    <div class="space-y-4 text-sm">
+      <div>
+        <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Target Penerima</label>
+        <select x-model="target"
+                class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-bold text-xs shadow-neo-sm focus:shadow-neo outline-none">
+          <option value="all">Semua Pengguna Terdaftar</option>
+          <option value="buyers">Hanya yang Pernah Belanja (Pembeli)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Isi Pesan (Format HTML Telegram)</label>
+        <textarea x-model="message" rows="5" placeholder="<b>🔥 PROMO SPESIAL HARI INI!</b>&#10;Dapatkan diskon untuk semua langganan premium."
+                  class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-mono text-xs shadow-neo-sm focus:shadow-neo outline-none"></textarea>
+      </div>
+
+      <div>
+        <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Tombol Inline (Opsional)</label>
+        <div class="grid grid-cols-2 gap-2">
+          <input x-model="buttonText" placeholder="Teks Tombol (e.g. 🛒 Beli Sekarang)"
+                 class="px-3 py-2 rounded-xl border-[2px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 text-xs font-bold shadow-neo-sm outline-none">
+          <input x-model="buttonUrl" placeholder="https://t.me/..."
+                 class="px-3 py-2 rounded-xl border-[2px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-mono text-xs shadow-neo-sm outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Live Preview Pesan</label>
+        <div class="rounded-xl border-[2px] border-black dark:border-zinc-500 bg-zinc-100 dark:bg-zinc-800/90 p-3.5 min-h-24 max-h-36 overflow-auto text-xs shadow-inner"
+             x-html="preview"></div>
+      </div>
+
+      <div class="flex gap-2.5 pt-1">
+        <button @click="previewMsg()"
+                class="neo-btn flex-1 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-black dark:text-white font-heading font-black text-xs uppercase border-2 border-black shadow-neo-sm">
+          👁 Cek Preview
+        </button>
+        <button @click="send()" :disabled="busy || !message.trim()"
+                class="neo-btn flex-1 py-2.5 rounded-xl bg-neo-yellow text-black font-heading font-black text-xs uppercase tracking-wider border-[2.5px] border-black shadow-neo disabled:opacity-40">
+          <span x-text="busy ? `Mengirim ${progress}%…` : '🚀 Kirim Broadcast'"></span>
+        </button>
+      </div>
+
+      <div x-show="result" x-cloak class="p-3.5 rounded-xl border-2 border-black font-mono text-xs font-bold"
+           :class="result && result.ok ? 'bg-neo-lime text-black' : 'bg-neo-pink text-black'"
+           x-text="result ? `✅ ${result.sent} terkirim, ${result.failed} gagal` + (result.recipients != null ? ` (target total: ${result.recipients})` : '') : ''"></div>
+      <div x-show="result && result.errors && result.errors.length" x-cloak class="p-2.5 rounded-xl bg-neo-pink text-black border border-black font-mono text-[11px]"
+           x-text="result && result.errors ? result.errors.join(' · ') : ''"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function broadcastPage() {
+  return {
+    target: 'all', message: '', buttonText: '', buttonUrl: '',
+    preview: '<i class="text-zinc-400">Ketik pesan dan klik tombol "Cek Preview" untuk melihat format tampilan HTML.</i>',
+    busy: false, progress: 0, result: null,
+    async previewMsg() {
+      const r = await postJson('/api/broadcast/preview', { message: this.message });
+      this.preview = r.html || '(kosong)';
+    },
+    async send() {
+      const targetLabel = this.target === 'all' ? 'SEMUA PENGGUNA' : 'PENGGUNA YANG PERNAH BELANJA';
+      if (!confirm(`Kirim pesan broadcast ke ${targetLabel}?`)) return;
+      this.busy = true; this.progress = 30; this.result = null;
+      const body = { message: this.message, target: this.target,
+        button_text: this.buttonText, button_url: this.buttonUrl };
+      const r = await postJson('/api/broadcast/send', body);
+      this.progress = 100; this.busy = false; this.result = r;
+      if (!r.ok) alert(r.message || 'Gagal mengirim broadcast');
+    },
+  }
+}
+async function postJson(url, body) {
+  const csrf = document.querySelector('meta[name=csrf-token]').content;
+  const res = await fetch(url, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+    body: JSON.stringify(body) });
+  return res.json();
+}
+</script>
+{% endblock %}

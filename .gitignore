@@ -2,3 +2,8 @@ venv/
 __pycache__/
 *.pyc
 .env
+.web_secret
+database.sqlite3
+*.log
+.desloppify/
+.pytest_cache/

@@ -37,8 +37,11 @@
 <!-- Tabel Pesanan -->
 <div class="bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-6 shadow-neo overflow-x-auto"
      x-data="{ modal: false, order: null, mode: 'stock', stocks: [], manual: '', selectedStock: null, busy: false,
-  async openFulfill(o) {
-    this.order = o; this.modal = true; this.mode = 'stock'; this.manual=''; this.stocks=[];
+  async openFulfill(id) {
+    const orders = JSON.parse(document.getElementById('orders-json')?.textContent || '[]');
+    const o = orders.find(x => x.id === id);
+    if (!o) return;
+    this.order = o; this.modal = true; this.mode = 'stock'; this.manual=''; this.stocks=[]; this.selectedStock = null;
     if (o.product_id) {
       const csrf = document.querySelector('meta[name=csrf-token]').content;
       const res = await fetch(`/api/orders/${o.id}/available-stocks`, { headers: { 'x-csrf-token': csrf } });
@@ -109,7 +112,7 @@
           <td class="py-3 px-3.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ o.created_at|tgdate }}</td>
           <td class="py-3 px-3.5 text-right space-x-1.5 whitespace-nowrap">
             {% if o.status == 'PAID_OUT_OF_STOCK' %}
-            <button @click="openFulfill({{ o|tojson }})"
+            <button @click="openFulfill({{ o.id }})"
                     class="neo-btn font-heading font-black text-xs px-3 py-1.5 rounded-lg bg-neo-pink text-black border-2 border-black shadow-neo-sm">
               📤 Kirim Akun Manual
             </button>
@@ -202,6 +205,9 @@
 {% endblock %}
 
 {% block scripts %}
+<script id="orders-json" type="application/json">
+{{ orders|tojson|safe }}
+</script>
 <script>
 async function postJson(url, body) {
   const csrf = document.querySelector('meta[name=csrf-token]').content;

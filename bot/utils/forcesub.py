@@ -41,5 +41,10 @@ async def ensure_subscribed(bot: Bot, event: TelegramEvent) -> bool:
     if isinstance(event, CallbackQuery):
         await event.answer("⚠️ Join channel dulu ya!", show_alert=True)
     else:
-        await event.answer(f"⚠️ Join {FORCE_SUB_CHANNEL} dulu ya!")
+        from bot.handlers.common import join_keyboard
+        await event.answer(
+            f"⚠️ Silakan bergabung ke channel resmi <b>{FORCE_SUB_CHANNEL}</b> terlebih dahulu untuk menggunakan fitur ini.",
+            parse_mode="HTML",
+            reply_markup=join_keyboard(),
+        )
     return False

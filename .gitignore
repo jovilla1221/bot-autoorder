@@ -7,3 +7,8 @@ database.sqlite3
 *.log
 .desloppify/
 .pytest_cache/
+node_modules/
+.venv/
+*.db-shm
+*.db-wal
+*.session

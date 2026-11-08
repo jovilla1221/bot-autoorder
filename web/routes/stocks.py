@@ -102,6 +102,29 @@ async def api_delete_stock(request: Request):
     return JSONResponse(result["json"], status_code=result["status"])
 
 
+class UpdateStockPayload(BaseModel):
+    stock_id: int
+    account_data: str
+    product_id: str
+
+
+@router.post("/api/stocks/update")
+async def api_update_stock(request: Request):
+    async def run(payload: UpdateStockPayload) -> dict:
+        ok, message = await crud.update_stock(
+            stock_id=payload.stock_id,
+            account_data=payload.account_data,
+            product_id=payload.product_id,
+        )
+        if ok:
+            log_event("info", "stock", f"Stok #{payload.stock_id} diupdate admin")
+            return {"ok": True, "message": message}
+        return {"ok": False, "message": message}
+
+    result = await _json_guard(request, payload_model=UpdateStockPayload, handler=run)
+    return JSONResponse(result["json"], status_code=result["status"])
+
+
 async def _json_guard(request: Request, payload_model, handler):
     """Generic JSON POST guard: login + CSRF + parse body ke pydantic model."""
     import json as _json

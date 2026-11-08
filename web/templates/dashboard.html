@@ -82,19 +82,26 @@
   <div class="neo-card-hover bg-[#FCE7F3] dark:bg-pink-950/60 rounded-2xl border-[3px] border-black dark:border-zinc-700 p-5 shadow-neo">
     <div class="flex items-center justify-between">
       <span class="font-mono text-xs font-black uppercase px-2.5 py-1 bg-black text-white dark:bg-pink-400 dark:text-black rounded-lg">
-        🤖 STATUS SERVICE
+        🤖 BOT TELEGRAM
       </span>
-      <span class="text-xl">⚙️</span>
+      <a href="https://t.me/autoorderrvspcbot" target="_blank"
+         class="text-xs font-mono font-black underline text-pink-900 dark:text-pink-300 hover:text-black dark:hover:text-white"
+         title="Buka bot di Telegram">
+        @autoorderrvspcbot ↗
+      </a>
     </div>
-    <div class="mt-4 flex items-center gap-2">
-      <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-black animate-pulse"></span>
+    <div class="mt-4 flex items-center gap-2.5">
+      <span class="relative flex h-3.5 w-3.5">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-black"></span>
+      </span>
       <p class="font-heading font-black text-2xl lg:text-3xl text-pink-950 dark:text-pink-200 uppercase tracking-tight">
-        {{ 'ONLINE' if bot_integrated else 'BRIDGE' }}
+        ONLINE & AKTIF
       </p>
     </div>
-    <div class="mt-2 pt-2 border-t-2 border-dashed border-pink-900/20 dark:border-pink-700/40 flex items-center justify-between text-xs font-bold text-pink-800 dark:text-pink-300">
-      <span>Poller: 15 detik</span>
-      <span class="font-mono">{{ 'Integrated' if bot_integrated else 'Kirim-saja' }}</span>
+    <div class="mt-2 pt-2 border-t-2 border-dashed border-pink-900/20 dark:border-pink-700/40 flex items-center justify-between text-xs font-bold text-pink-900 dark:text-pink-300">
+      <span class="flex items-center gap-1">⚡ Auto-Delivery Berjalan</span>
+      <span class="font-mono text-[11px] bg-white/80 dark:bg-zinc-800 px-2 py-0.5 rounded border border-black/20">Cek tiap 15s</span>
     </div>
   </div>
 </div>
@@ -189,7 +196,7 @@
             <td class="py-2.5 px-3 font-medium">
               {{ s.product_name }}
               {% if not s.is_active %}
-                <span class="font-mono text-[10px] uppercase font-bold px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 rounded border border-zinc-400">Nonaktif</span>
+                <span class="font-mono text-[10px] uppercase font-bold px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 rounded border border-zinc-400">Nonaktif di Bot</span>
               {% endif %}
             </td>
             <td class="py-2.5 px-3 text-right font-mono font-bold">
@@ -255,9 +262,12 @@
 {% endblock %}
 
 {% block scripts %}
+<script id="daily-json" type="application/json">
+{{ daily|tojson|safe }}
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const daily = {{ daily|tojson }};
+  const daily = JSON.parse(document.getElementById('daily-json')?.textContent || '[]');
   const labels = daily.map(d => d.day?.slice(5) || '');
   const isDark = document.documentElement.classList.contains('dark');
   const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';

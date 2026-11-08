@@ -65,9 +65,10 @@ Semua dijalankan dengan `venv/bin/python`, hasil **lulus semua**:
 
 ### A. Operasional & Polish
 - [ ] **Webhook SayaBayar**: fulfillment saat ini murni andalan poller 15s + cek manual. Webhook akan mempercepat delivery (opsional, poller sudah cukup untuk skala kecil).
-- [ ] **Edit/hapus produk** via admin (saat baru bisa tambah + toggle aktif; edit harga/deskripsi masih via DB langsung).
-- [ ] **Manajemen kategori** via admin (tambah kategori baru masih via seeding/DB).
-- [ ] **Restock otomatis untuk order `PAID_OUT_OF_STOCK`**: admin harus kirim akun manual; belum ada tombol "kirim manual" yang menandai order COMPLETED.
+- [x] **Edit/hapus produk** via admin dashboard (modal edit produk + inline rename kategori).
+- [x] **Edit data stok** via admin dashboard (modal edit stok untuk ubah kredensial akun / relasi produk pada stok belum terjual).
+- [x] **Manajemen kategori** via admin (tambah/rename/hapus kategori terintegrasi).
+- [x] **Restock & kirim manual untuk order `PAID_OUT_OF_STOCK`**: fitur kirim akun manual (dari stok ready atau input baru) via dashboard.
 - [ ] **Timeout invoice PENDING**: invoice yang tidak pernah dibayar tetap di-poll selamanya (max_age_hours di `get_pending_orders` belum dipakai).
 
 ### B. Keamanan & Robustness

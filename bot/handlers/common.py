@@ -42,7 +42,8 @@ import html
 async def cmd_start(message: Message, bot: Bot) -> None:
     await register_user(message)
     name = html.escape(message.from_user.first_name or "Kak") if message.from_user else "Kak"
-    if not await ensure_subscribed(bot, message):
+    from bot.utils.forcesub import is_subscribed
+    if not (message.from_user and await is_subscribed(bot, message.from_user.id)):
         await message.answer(
             f"👋 Halo, <b>{name}</b>!\n\n"
             "Selamat datang di <b>Reveuse Space Auto-Order</b> ⚡\n\n"

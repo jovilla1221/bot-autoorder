@@ -60,23 +60,13 @@ async def _catalog_root_keyboard() -> InlineKeyboardMarkup:
 @router.message(F.text == "🛒 Katalog Produk")
 @router.message(Command("katalog"))
 async def show_catalog(message: Message, bot: Bot) -> None:
-    await ensure_subscribed_or_warn(message, bot)
-    if not await _passed(message):
+    if not await ensure_subscribed(bot, message):
         return
     await message.answer(
         "🛒 <b>Katalog Produk</b>\n\nPilih kategori:",
         parse_mode="HTML",
         reply_markup=await _catalog_root_keyboard(),
     )
-
-
-async def ensure_subscribed_or_warn(event: Message | CallbackQuery, bot: Bot) -> bool:
-    """Wrapper agar handler katalog cukup satu panggilan."""
-    return await ensure_subscribed(bot, event)
-
-
-async def _passed(event: Message | CallbackQuery) -> bool:
-    return True
 
 
 @router.callback_query(F.data == "cat:root")

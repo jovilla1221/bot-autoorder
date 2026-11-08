@@ -37,10 +37,62 @@ async def test_add_product_duplicate_fails():
     assert ok is False
 
 
+async def test_update_product():
+    await crud.add_product("test_edit_prod", "streaming", "Old Name", "Old Desc", 20000)
+    ok = await crud.update_product(
+        "test_edit_prod",
+        name="New Name",
+        description="New Desc",
+        price=25000,
+        category_id="streaming",
+    )
+    assert ok is True
+    prod = await crud.get_product("test_edit_prod")
+    assert prod is not None
+    assert prod["name"] == "New Name"
+    assert prod["description"] == "New Desc"
+    assert prod["price"] == 25000
+
+
 async def test_stock_bulk_and_count():
     added = await crud.add_stocks_bulk("spotify_premium_id", ["a@b.com:pass1", "c@d.com:pass2", "", "   "])
     assert added == 2
     assert await crud.get_stock_count("spotify_premium_id") == 2
+
+
+async def test_update_stock():
+    stock_id = await crud.add_stock("spotify_premium_id", "user1@mail.com:pass1")
+    assert stock_id > 0
+
+    # Update account_data dan product_id
+    ok, msg = await crud.update_stock(stock_id, account_data="user1_updated@mail.com:newpass", product_id="netflix_trial_reg_th")
+    assert ok is True
+
+    stocks = await crud.get_stocks(product_id="netflix_trial_reg_th")
+    matched = [s for s in stocks if s["id"] == stock_id]
+    assert len(matched) == 1
+    assert matched[0]["account_data"] == "user1_updated@mail.com:newpass"
+
+    # Validasi input kosong
+    ok_empty, msg_empty = await crud.update_stock(stock_id, account_data="   ")
+    assert ok_empty is False
+    assert "kosong" in msg_empty
+
+    # Tidak bisa update jika sudah terjual
+    await crud.upsert_user(99, "buyer99", "Buyer")
+    order = await crud.create_order("INV-TEST-EDIT", 99, "netflix_trial_reg_th", 25000)
+    claimed = await crud.claim_available_stock("netflix_trial_reg_th", order["id"])
+    assert claimed is not None
+    assert claimed["id"] == stock_id
+
+    ok_sold, msg_sold = await crud.update_stock(stock_id, account_data="cant_change@mail.com:p")
+    assert ok_sold is False
+    assert "sudah terjual" in msg_sold
+
+    # Update stock yang tidak ada
+    ok_nf, msg_nf = await crud.update_stock(999999, account_data="x@y.com:z")
+    assert ok_nf is False
+    assert "tidak ditemukan" in msg_nf
 
 
 async def test_claim_stock_fifo_and_idempotent_count():

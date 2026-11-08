@@ -7,14 +7,19 @@
 <div class="bg-white dark:bg-neo-darkCard rounded-2xl border-[3px] border-black dark:border-zinc-700 p-6 mb-8 shadow-neo"
      x-data="{ name: '', editing: null, editName: '', add: async function() {
         if (!this.name.trim()) return;
-        await postJson('/api/categories/add', { name: this.name }); this.name=''; location.reload();
+        const r = await postJson('/api/categories/add', { name: this.name.trim() });
+        if (!r || !r.ok) { alert((r && r.message) || 'Gagal menambah kategori'); return; }
+        this.name=''; location.reload();
      }, rename: async function(id) {
         if (!this.editName.trim()) return;
-        await postJson('/api/categories/rename', { category_id: id, name: this.editName }); this.editing=null; location.reload();
+        const r = await postJson('/api/categories/rename', { category_id: id, name: this.editName.trim() });
+        if (!r || !r.ok) { alert((r && r.message) || 'Gagal mengubah kategori'); return; }
+        this.editing=null; location.reload();
      }, remove: async function(id) {
         if (!confirm('Hapus kategori ini?')) return;
         const r = await postJson('/api/categories/delete', { category_id: id });
-        if (!r.ok) alert(r.message); location.reload();
+        if (!r || !r.ok) { alert((r && r.message) || 'Gagal menghapus kategori'); return; }
+        location.reload();
      }}">
   <div class="flex items-center gap-2 mb-3 pb-3 border-b-2 border-black dark:border-zinc-700">
     <span class="text-xl">📂</span>
@@ -24,15 +29,16 @@
   <div class="flex flex-wrap gap-2.5 mb-5">
     {% for c in categories %}
     <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-zinc-800 border-2 border-black dark:border-zinc-500 shadow-neo-sm">
-      {% if editing and editing == c.id %}
+      <div x-show="editing === '{{ c.id }}'" class="inline-flex items-center gap-1.5">
         <input x-model="editName" class="bg-white dark:bg-zinc-900 border border-black px-2 py-0.5 rounded outline-none font-mono text-xs w-28" @keydown.enter="rename('{{ c.id }}')">
         <button @click="rename('{{ c.id }}')" class="text-emerald-600 font-black text-sm" title="Simpan">✓</button>
         <button @click="editing=null" class="text-zinc-500 font-bold" title="Batal">✕</button>
-      {% else %}
+      </div>
+      <div x-show="editing !== '{{ c.id }}'" class="inline-flex items-center gap-2">
         <span class="font-heading uppercase tracking-wide">{{ c.name }}</span>
-        <button @click="editing='{{ c.id }}'; editName='{{ c.name }}'" class="text-zinc-500 hover:text-black dark:hover:text-white" title="Rename Kategori">✏️</button>
+        <button @click="editing='{{ c.id }}'; editName='{{ c.name|replace("'", "\\'") }}'" class="text-zinc-500 hover:text-black dark:hover:text-white" title="Rename Kategori">✏️</button>
         <button @click="remove('{{ c.id }}')" class="text-rose-500 hover:text-rose-700" title="Hapus Kategori">✕</button>
-      {% endif %}
+      </div>
     </div>
     {% else %}
     <span class="font-mono text-xs text-zinc-400">Belum ada kategori terdaftar.</span>
@@ -74,13 +80,14 @@
           <th class="py-3 px-3.5 text-left">Kategori</th>
           <th class="py-3 px-3.5 text-left">Harga Jual</th>
           <th class="py-3 px-3.5 text-left">Stok Ready</th>
-          <th class="py-3 px-3.5 text-left">Status Bot</th>
+          <th class="py-3 px-3.5 text-center">Status di Bot</th>
           <th class="py-3 px-3.5 text-right">Aksi</th>
         </tr>
       </thead>
       <tbody class="divide-y-2 divide-zinc-200 dark:divide-zinc-700 bg-white dark:bg-zinc-800">
         {% for p in products %}
         {% set st = summary[p.id] %}
+        {% set is_on = (p.is_active == 1 or p.is_active == True or p.is_active == '1' or p.is_active == 'True') %}
         <tr class="hover:bg-amber-50/40 dark:hover:bg-zinc-700/40 transition">
           <td class="py-3 px-3.5">
             <div class="font-heading font-black text-sm text-zinc-900 dark:text-zinc-100">{{ p.name }}</div>
@@ -100,18 +107,17 @@
               {{ st.ready if st else 0 }} akun
             </span>
           </td>
-          <td class="py-3 px-3.5">
-            <!-- Mechanical Toggle Button -->
+          <td class="py-3 px-3.5 text-center">
+            <!-- User-Friendly Interactive Status Badge -->
             <button @click="toggle('{{ p.id }}')"
-                    class="neo-btn relative inline-flex h-7 w-13 items-center rounded-full border-2 border-black transition-colors"
-                    :class="'{{ p.is_active }}' === 'True' ? 'bg-neo-lime' : 'bg-zinc-300 dark:bg-zinc-700'"
-                    title="Toggle Aktif/Nonaktif di Katalog Bot">
-              <span class="inline-block h-5 w-5 rounded-full border-2 border-black bg-white shadow-none transition-transform"
-                    style="transform: {{ 'translateX(24px)' if p.is_active else 'translateX(2px)' }};"></span>
+                    class="neo-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 border-black text-xs font-heading font-black tracking-wider transition-all shadow-neo-sm hover:translate-y-0.5 {{ 'bg-neo-lime text-black' if is_on else 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300' }}"
+                    title="Klik untuk mengubah status: {{ 'Sembunyikan dari katalog bot' if is_on else 'Tampilkan di katalog bot' }}">
+              <span class="w-2.5 h-2.5 rounded-full border border-black {{ 'bg-emerald-600 animate-pulse' if is_on else 'bg-zinc-400' }}"></span>
+              <span>{{ 'TAYANG (AKTIF)' if is_on else 'NONAKTIF' }}</span>
             </button>
           </td>
           <td class="py-3 px-3.5 text-right space-x-1.5 whitespace-nowrap">
-            <button @click="openEdit({{ p|tojson }})"
+            <button @click="openEdit('{{ p.id }}')"
                     class="neo-btn font-mono text-xs px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-black dark:text-white font-bold border-2 border-black shadow-neo-sm">
               ✏️ Edit
             </button>
@@ -142,6 +148,11 @@
           <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">ID Slug (Unik, huruf kecil & underscore)</label>
           <input x-model="form.product_id" placeholder="netflix_premium_1bln"
                  class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-black dark:border-zinc-400 bg-zinc-50 dark:bg-zinc-800 font-mono text-xs shadow-neo-sm focus:shadow-neo outline-none">
+        </div>
+        <div x-show="editingId">
+          <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">ID Slug Produk</label>
+          <input :value="editingId" disabled
+                 class="w-full px-4 py-2.5 rounded-xl border-[2.5px] border-zinc-300 dark:border-zinc-600 bg-zinc-200 dark:bg-zinc-700 font-mono text-xs text-zinc-600 dark:text-zinc-300 cursor-not-allowed outline-none">
         </div>
         <div>
           <label class="block font-heading font-black text-xs uppercase tracking-wider mb-1.5">Kategori</label>
@@ -185,37 +196,107 @@
 {% endblock %}
 
 {% block scripts %}
+<script id="products-json" type="application/json">
+{{ products|tojson|safe }}
+</script>
 <script>
 function productsPage() {
+  const products = JSON.parse(document.getElementById('products-json').textContent || '[]');
   return {
-    modal: false, editingId: null, saving: false,
-    form: { product_id: '', category_id: 'streaming', name: '', price: 0, description: '' },
-    openAdd() { this.editingId = null; this.form = { product_id: '', category_id: 'streaming', name: '', price: 0, description: '' }; this.modal = true; },
-    openEdit(p) { this.editingId = p.id; this.form = { ...p }; this.modal = true; },
-    async save() {
-      this.saving = true;
-      if (this.editingId) {
-        await postJson('/api/products/update', { ...this.form, product_id: this.editingId });
-      } else {
-        const r = await postJson('/api/products/add', this.form);
-        if (!r.ok) { alert(r.message); this.saving = false; return; }
-      }
-      location.reload();
+    products: products,
+    modal: false,
+    editingId: null,
+    saving: false,
+    form: { product_id: '', category_id: '{{ categories[0].id if categories else "streaming" }}', name: '', price: 0, description: '' },
+    openAdd() {
+      this.editingId = null;
+      this.form = {
+        product_id: '',
+        category_id: '{{ categories[0].id if categories else "streaming" }}',
+        name: '',
+        price: 0,
+        description: ''
+      };
+      this.modal = true;
     },
-    async toggle(id) { await postJson('/api/products/toggle', { product_id: id }); location.reload(); },
+    openEdit(id) {
+      const p = this.products.find(x => x.id === id);
+      if (!p) return;
+      this.editingId = p.id;
+      this.form = {
+        product_id: p.id,
+        category_id: p.category_id,
+        name: p.name,
+        price: p.price,
+        description: p.description || ''
+      };
+      this.modal = true;
+    },
+    async save() {
+      if (!this.form.name.trim()) {
+        alert('Nama produk wajib diisi.');
+        return;
+      }
+      if (this.form.price === '' || this.form.price === null || isNaN(this.form.price) || Number(this.form.price) < 0) {
+        alert('Harga jual produk harus angka valid >= 0.');
+        return;
+      }
+      this.saving = true;
+      try {
+        let r;
+        if (this.editingId) {
+          r = await postJson('/api/products/update', {
+            product_id: this.editingId,
+            name: this.form.name.trim(),
+            category_id: this.form.category_id,
+            price: Number(this.form.price),
+            description: (this.form.description || '').trim()
+          });
+        } else {
+          if (!this.form.product_id.trim()) {
+            alert('ID slug produk wajib diisi.');
+            this.saving = false;
+            return;
+          }
+          r = await postJson('/api/products/add', {
+            product_id: this.form.product_id.trim(),
+            category_id: this.form.category_id,
+            name: this.form.name.trim(),
+            price: Number(this.form.price),
+            description: (this.form.description || '').trim()
+          });
+        }
+        if (!r || !r.ok) {
+          alert((r && r.message) ? r.message : 'Gagal menyimpan produk.');
+          this.saving = false;
+          return;
+        }
+        location.reload();
+      } catch (err) {
+        alert('Terjadi kesalahan saat menyimpan: ' + err.message);
+        this.saving = false;
+      }
+    },
+    async toggle(id) {
+      const r = await postJson('/api/products/toggle', { product_id: id });
+      if (r && r.ok) location.reload();
+      else alert((r && r.message) || 'Gagal mengubah status produk');
+    },
     async remove(id) {
       if (!confirm('Yakin hapus produk ' + id + '?')) return;
       const r = await postJson('/api/products/delete', { product_id: id });
-      if (!r.ok) { alert(r.message); return; }
+      if (!r || !r.ok) { alert((r && r.message) || 'Gagal menghapus produk'); return; }
       location.reload();
     },
-  }
+  };
 }
 async function postJson(url, body) {
   const csrf = document.querySelector('meta[name=csrf-token]').content;
-  const res = await fetch(url, { method: 'POST',
+  const res = await fetch(url, {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
-    body: JSON.stringify(body) });
+    body: JSON.stringify(body)
+  });
   return res.json();
 }
 </script>

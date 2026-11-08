@@ -303,6 +303,43 @@ async def delete_stock(stock_id: int) -> bool:
         return cursor.rowcount > 0
 
 
+async def update_stock(
+    stock_id: int,
+    account_data: Optional[str] = None,
+    product_id: Optional[str] = None,
+) -> tuple[bool, str]:
+    """Update data baris stok yang BELUM terjual. Return (sukses, pesan)."""
+    sets: list[str] = []
+    params: list[Any] = []
+    if account_data is not None:
+        val = account_data.strip()
+        if not val:
+            return False, "Data akun tidak boleh kosong."
+        sets.append("account_data = ?")
+        params.append(val)
+    if product_id is not None:
+        p_val = product_id.strip()
+        if not p_val:
+            return False, "Produk tujuan tidak boleh kosong."
+        sets.append("product_id = ?")
+        params.append(p_val)
+    if not sets:
+        return True, "Tidak ada perubahan."
+
+    params.append(stock_id)
+    async with get_db() as db:
+        cursor = await db.execute("SELECT is_sold FROM stocks WHERE id = ?", (stock_id,))
+        row = await cursor.fetchone()
+        if not row:
+            return False, "Stok tidak ditemukan."
+        if row["is_sold"]:
+            return False, "Stok sudah terjual, tidak bisa diubah."
+
+        await db.execute(f"UPDATE stocks SET {', '.join(sets)} WHERE id = ? AND is_sold = 0", tuple(params))
+        await db.commit()
+        return True, "Stok berhasil diperbarui."
+
+
 async def get_stock_count(product_id: str) -> int:
     """Hitung sisa stok tersedia (belum terjual) untuk produk."""
     async with get_db() as db:

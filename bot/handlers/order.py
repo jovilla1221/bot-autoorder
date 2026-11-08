@@ -218,9 +218,11 @@ async def check_status_by_id(message: Message, bot: Bot) -> None:
     status = parse_invoice_status(data)
     paid_amount = data.get("amount") or data.get("amount_unique")
     await _sync_and_fulfill(bot, invoice_id, status, paid_amount)
+    amount_str = f"Rp {int(paid_amount):,}" if paid_amount else "-"
     await message.answer(
-        f"📋 <b>Invoice</b> <code>{invoice_id}</code>\n"
-        f"Status: <b>{status}</b>\n"
-        f"Data: {data}",
+        f"📋 <b>Informasi Status Invoice</b>\n\n"
+        f"🆔 <b>ID Invoice:</b> <code>{invoice_id}</code>\n"
+        f"📊 <b>Status:</b> <b>{status}</b>\n"
+        f"💰 <b>Nominal:</b> {amount_str}",
         parse_mode="HTML",
     )

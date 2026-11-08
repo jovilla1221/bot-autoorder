@@ -186,16 +186,14 @@
       </div>
 
       <div class="ml-auto flex items-center gap-3">
-        <!-- Shortcut ke Bot Telegram -->
+        <!-- Shortcut & Status Bot Telegram -->
         <a href="https://t.me/autoorderrvspcbot" target="_blank"
-           class="neo-btn hidden md:inline-flex items-center gap-1.5 font-heading font-black text-xs uppercase px-3 py-2 rounded-xl bg-neo-yellow text-black border-2 border-black shadow-neo-sm">
-          <span>🤖</span> Buka Bot
+           class="neo-btn inline-flex items-center gap-2 font-heading font-black text-xs uppercase px-3.5 py-2 rounded-xl bg-neo-lime text-black border-2 border-black shadow-neo-sm hover:translate-x-0.5 transition-transform"
+           title="Bot Telegram Berjalan Normal (@autoorderrvspcbot) — Klik untuk membuka bot di Telegram">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-700 border border-black animate-pulse"></span>
+          <span>🤖 Bot Online</span>
+          <span class="text-[10px] font-mono opacity-60">↗</span>
         </a>
-
-        <!-- Quick Tunnel / Status pill -->
-        <span class="hidden sm:inline-flex items-center gap-1.5 font-mono text-xs font-black px-3 py-1.5 rounded-lg bg-neo-lime text-black border-2 border-black shadow-neo-sm">
-          <span class="animate-pulse">●</span> QuickTunnel Active
-        </span>
 
         <!-- Theme Toggle -->
         <button @click="theme = theme === 'dark' ? 'light' : 'dark'"

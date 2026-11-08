@@ -143,7 +143,6 @@ async def prod_input_desc(message: Message, state: FSMContext, bot: Bot) -> None
 @router.callback_query(F.data == "adm:toggle")
 async def cb_toggle(callback: CallbackQuery, state: FSMContext) -> None:
     await _render_toggle_list(callback, state)
-    await guarded(callback, lambda: _render_toggle_list(callback, state))
 
 
 async def _render_toggle_list(callback: CallbackQuery, state: FSMContext) -> None:

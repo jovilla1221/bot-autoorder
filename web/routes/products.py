@@ -67,12 +67,20 @@ class ProductUpdatePayload(BaseModel):
 @router.post("/api/products/update")
 async def api_update_product(request: Request):
     async def run(p: ProductUpdatePayload) -> dict:
+        name_val = p.name.strip() if p.name is not None else None
+        if name_val is not None and not name_val:
+            return {"ok": False, "message": "Nama produk tidak boleh kosong."}
+        if p.price is not None and p.price < 0:
+            return {"ok": False, "message": "Harga produk tidak boleh negatif."}
+        desc_val = p.description.strip() if p.description is not None else None
+        cat_val = p.category_id.strip() if p.category_id is not None else None
+
         ok = await crud.update_product(
             product_id=p.product_id,
-            name=p.name.strip() if p.name else None,
-            description=p.description.strip() if p.description else None,
+            name=name_val,
+            description=desc_val,
             price=p.price,
-            category_id=p.category_id,
+            category_id=cat_val,
         )
         if ok:
             log_event("info", "product", f"Produk {p.product_id} diupdate")

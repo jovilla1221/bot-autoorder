@@ -113,7 +113,7 @@
 
       <div x-show="result" x-cloak class="p-3.5 rounded-xl border-2 border-black font-mono text-xs font-bold"
            :class="result && result.ok ? 'bg-neo-lime text-black' : 'bg-neo-pink text-black'"
-           x-text="result ? `✅ ${result.sent} terkirim, ${result.failed} gagal` + (result.recipients != null ? ` (target total: ${result.recipients})` : '') : ''"></div>
+           x-text="result ? (result.ok ? `✅ ${result.sent} terkirim, ${result.failed} gagal` + (result.recipients != null ? ` (target total: ${result.recipients})` : '') : `❌ Gagal: ${result.message || 'Terjadi kesalahan'}`) : ''"></div>
       <div x-show="result && result.errors && result.errors.length" x-cloak class="p-2.5 rounded-xl bg-neo-pink text-black border border-black font-mono text-[11px]"
            x-text="result && result.errors ? result.errors.join(' · ') : ''"></div>
     </div>
